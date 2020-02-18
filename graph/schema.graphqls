@@ -1,0 +1,71 @@
+type User {
+  id: ID!
+  username: String!
+  name: String!
+  bio: String!
+}
+
+type ExtendedUser {
+  id: ID!
+  username: String!
+  name: String!
+  bio: String!
+  balance: Int!
+}
+
+type Product {
+  id: ID!
+  userId: User!
+  price: Int!
+  name: String!
+
+  description: String
+  summary: String
+  callToAction: String
+  coverImage: String
+  slug: String
+  isPablished: Boolean
+  receipt: String
+  content: String
+}
+
+type Query {
+  product(id: ID!): Product!
+  products(userId: ID, count: Int, after: Int): [Product!]!
+  me: ExtendedUser!
+}
+
+input NewProduct {
+  name: String!
+  price: Int!
+
+  description: String
+  summary: String
+  callToAction: String
+  coverImage: String
+  slug: String
+  isPablished: Boolean
+  receipt: String
+  content: String
+}
+
+type PayResponse {
+  url: String!
+}
+
+input BuyProduct {
+  productId: ID!
+}
+
+input PublishProduct {
+  productId: ID!
+  slug: String!
+}
+
+type Mutation {
+  buyProduct(input: BuyProduct): PayResponse!
+  createProduct(input: NewProduct!): Product!
+  publishProduct(input: PublishProduct!): Product!
+}
+
+scalar Timestamp
