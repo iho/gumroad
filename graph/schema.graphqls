@@ -15,7 +15,7 @@ type ExtendedUser {
 
 type Product {
   id: ID!
-  userId: User!
+  user: User!
   price: Int!
   name: String!
 
@@ -39,14 +39,14 @@ input NewProduct {
   name: String!
   price: Int!
 
-  description: String
-  summary: String
-  callToAction: String
-  coverImage: String
-  slug: String
-  isPablished: Boolean
-  receipt: String
-  content: String
+  description: String!
+  summary: String!
+  callToAction: String!
+  coverImage: String!
+  slug: String!
+  isPablished: Boolean!
+  receipt: String!
+  content: String!
 }
 
 type PayResponse {

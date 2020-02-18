@@ -15,16 +15,16 @@ type ExtendedUser struct {
 }
 
 type NewProduct struct {
-	Name         string  `json:"name"`
-	Price        int32   `json:"price"`
-	Description  *string `json:"description"`
-	Summary      *string `json:"summary"`
-	CallToAction *string `json:"callToAction"`
-	CoverImage   *string `json:"coverImage"`
-	Slug         *string `json:"slug"`
-	IsPablished  *bool   `json:"isPablished"`
-	Receipt      *string `json:"receipt"`
-	Content      *string `json:"content"`
+	Name         string `json:"name"`
+	Price        int32  `json:"price"`
+	Description  string `json:"description"`
+	Summary      string `json:"summary"`
+	CallToAction string `json:"callToAction"`
+	CoverImage   string `json:"coverImage"`
+	Slug         string `json:"slug"`
+	IsPablished  bool   `json:"isPablished"`
+	Receipt      string `json:"receipt"`
+	Content      string `json:"content"`
 }
 
 type PayResponse struct {

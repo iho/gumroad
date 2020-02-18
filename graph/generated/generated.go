@@ -64,9 +64,9 @@ type ComplexityRoot struct {
 	}
 
 	Product struct {
-		CallToAction func(childComplexity int) int
+		Calltoaction func(childComplexity int) int
 		Content      func(childComplexity int) int
-		CoverImage   func(childComplexity int) int
+		Coverimage   func(childComplexity int) int
 		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Ispablished  func(childComplexity int) int
@@ -75,7 +75,7 @@ type ComplexityRoot struct {
 		Receipt      func(childComplexity int) int
 		Slug         func(childComplexity int) int
 		Summary      func(childComplexity int) int
-		UserID       func(childComplexity int) int
+		User         func(childComplexity int) int
 	}
 
 	Query struct {
@@ -98,17 +98,8 @@ type MutationResolver interface {
 	PublishProduct(ctx context.Context, input model.PublishProduct) (*pg.Product, error)
 }
 type ProductResolver interface {
-	UserID(ctx context.Context, obj *pg.Product) (*pg.User, error)
+	User(ctx context.Context, obj *pg.Product) (*pg.User, error)
 	Price(ctx context.Context, obj *pg.Product) (int32, error)
-
-	Description(ctx context.Context, obj *pg.Product) (*string, error)
-	Summary(ctx context.Context, obj *pg.Product) (*string, error)
-	CallToAction(ctx context.Context, obj *pg.Product) (*string, error)
-	CoverImage(ctx context.Context, obj *pg.Product) (*string, error)
-	Slug(ctx context.Context, obj *pg.Product) (*string, error)
-
-	Receipt(ctx context.Context, obj *pg.Product) (*string, error)
-	Content(ctx context.Context, obj *pg.Product) (*string, error)
 }
 type QueryResolver interface {
 	Product(ctx context.Context, id int32) (*pg.Product, error)
@@ -210,11 +201,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.PayResponse.URL(childComplexity), true
 
 	case "Product.callToAction":
-		if e.complexity.Product.CallToAction == nil {
+		if e.complexity.Product.Calltoaction == nil {
 			break
 		}
 
-		return e.complexity.Product.CallToAction(childComplexity), true
+		return e.complexity.Product.Calltoaction(childComplexity), true
 
 	case "Product.content":
 		if e.complexity.Product.Content == nil {
@@ -224,11 +215,11 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		return e.complexity.Product.Content(childComplexity), true
 
 	case "Product.coverImage":
-		if e.complexity.Product.CoverImage == nil {
+		if e.complexity.Product.Coverimage == nil {
 			break
 		}
 
-		return e.complexity.Product.CoverImage(childComplexity), true
+		return e.complexity.Product.Coverimage(childComplexity), true
 
 	case "Product.description":
 		if e.complexity.Product.Description == nil {
@@ -286,12 +277,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Product.Summary(childComplexity), true
 
-	case "Product.userId":
-		if e.complexity.Product.UserID == nil {
+	case "Product.user":
+		if e.complexity.Product.User == nil {
 			break
 		}
 
-		return e.complexity.Product.UserID(childComplexity), true
+		return e.complexity.Product.User(childComplexity), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -433,7 +424,7 @@ type ExtendedUser {
 
 type Product {
   id: ID!
-  userId: User!
+  user: User!
   price: Int!
   name: String!
 
@@ -457,14 +448,14 @@ input NewProduct {
   name: String!
   price: Int!
 
-  description: String
-  summary: String
-  callToAction: String
-  coverImage: String
-  slug: String
-  isPablished: Boolean
-  receipt: String
-  content: String
+  description: String!
+  summary: String!
+  callToAction: String!
+  coverImage: String!
+  slug: String!
+  isPablished: Boolean!
+  receipt: String!
+  content: String!
 }
 
 type PayResponse {
@@ -991,7 +982,7 @@ func (ec *executionContext) _Product_id(ctx context.Context, field graphql.Colle
 	return ec.marshalNID2int32(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Product_userId(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
+func (ec *executionContext) _Product_user(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1008,7 +999,7 @@ func (ec *executionContext) _Product_userId(ctx context.Context, field graphql.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().UserID(rctx, obj)
+		return ec.resolvers.Product().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1104,13 +1095,13 @@ func (ec *executionContext) _Product_description(ctx context.Context, field grap
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().Description(rctx, obj)
+		return obj.Description, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1119,9 +1110,9 @@ func (ec *executionContext) _Product_description(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Product_summary(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
@@ -1135,13 +1126,13 @@ func (ec *executionContext) _Product_summary(ctx context.Context, field graphql.
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().Summary(rctx, obj)
+		return obj.Summary, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1150,9 +1141,9 @@ func (ec *executionContext) _Product_summary(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Product_callToAction(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
@@ -1166,13 +1157,13 @@ func (ec *executionContext) _Product_callToAction(ctx context.Context, field gra
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().CallToAction(rctx, obj)
+		return obj.Calltoaction, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1181,9 +1172,9 @@ func (ec *executionContext) _Product_callToAction(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Product_coverImage(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
@@ -1197,13 +1188,13 @@ func (ec *executionContext) _Product_coverImage(ctx context.Context, field graph
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().CoverImage(rctx, obj)
+		return obj.Coverimage, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1212,9 +1203,9 @@ func (ec *executionContext) _Product_coverImage(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Product_slug(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
@@ -1228,13 +1219,13 @@ func (ec *executionContext) _Product_slug(ctx context.Context, field graphql.Col
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().Slug(rctx, obj)
+		return obj.Slug, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1243,9 +1234,9 @@ func (ec *executionContext) _Product_slug(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Product_isPablished(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
@@ -1290,13 +1281,13 @@ func (ec *executionContext) _Product_receipt(ctx context.Context, field graphql.
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().Receipt(rctx, obj)
+		return obj.Receipt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1305,9 +1296,9 @@ func (ec *executionContext) _Product_receipt(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Product_content(ctx context.Context, field graphql.CollectedField, obj *pg.Product) (ret graphql.Marshaler) {
@@ -1321,13 +1312,13 @@ func (ec *executionContext) _Product_content(ctx context.Context, field graphql.
 		Object:   "Product",
 		Field:    field,
 		Args:     nil,
-		IsMethod: true,
+		IsMethod: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Product().Content(rctx, obj)
+		return obj.Content, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1336,9 +1327,9 @@ func (ec *executionContext) _Product_content(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_product(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2755,49 +2746,49 @@ func (ec *executionContext) unmarshalInputNewProduct(ctx context.Context, obj in
 			}
 		case "description":
 			var err error
-			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Description, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "summary":
 			var err error
-			it.Summary, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Summary, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "callToAction":
 			var err error
-			it.CallToAction, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.CallToAction, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "coverImage":
 			var err error
-			it.CoverImage, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.CoverImage, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "slug":
 			var err error
-			it.Slug, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Slug, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "isPablished":
 			var err error
-			it.IsPablished, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			it.IsPablished, err = ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "receipt":
 			var err error
-			it.Receipt, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Receipt, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
 		case "content":
 			var err error
-			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Content, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2970,7 +2961,7 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "userId":
+		case "user":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -2978,7 +2969,7 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Product_userId(ctx, field, obj)
+				res = ec._Product_user(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3004,84 +2995,21 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "description":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_description(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_description(ctx, field, obj)
 		case "summary":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_summary(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_summary(ctx, field, obj)
 		case "callToAction":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_callToAction(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_callToAction(ctx, field, obj)
 		case "coverImage":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_coverImage(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_coverImage(ctx, field, obj)
 		case "slug":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_slug(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_slug(ctx, field, obj)
 		case "isPablished":
 			out.Values[i] = ec._Product_isPablished(ctx, field, obj)
 		case "receipt":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_receipt(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_receipt(ctx, field, obj)
 		case "content":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Product_content(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Product_content(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

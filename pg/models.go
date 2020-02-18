@@ -16,20 +16,20 @@ type Order struct {
 }
 
 type Product struct {
-	ID           int32          `json:"id"`
-	UserID       sql.NullInt32  `json:"user_id"`
-	Price        sql.NullInt32  `json:"price"`
-	Name         string         `json:"name"`
-	Description  sql.NullString `json:"description"`
-	Summary      sql.NullString `json:"summary"`
-	Calltoaction sql.NullString `json:"calltoaction"`
-	Coverimage   sql.NullString `json:"coverimage"`
-	Slug         sql.NullString `json:"slug"`
-	Ispablished  bool           `json:"ispablished"`
-	Receipt      sql.NullString `json:"receipt"`
-	Content      sql.NullString `json:"content"`
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	ID           int32         `json:"id"`
+	UserID       sql.NullInt32 `json:"user_id"`
+	Price        sql.NullInt32 `json:"price"`
+	Name         string        `json:"name"`
+	Description  string        `json:"description"`
+	Summary      string        `json:"summary"`
+	Calltoaction string        `json:"calltoaction"`
+	Coverimage   string        `json:"coverimage"`
+	Slug         string        `json:"slug"`
+	Ispablished  bool          `json:"ispablished"`
+	Receipt      string        `json:"receipt"`
+	Content      string        `json:"content"`
+	CreatedAt    sql.NullTime  `json:"created_at"`
+	UpdatedAt    sql.NullTime  `json:"updated_at"`
 }
 
 type User struct {

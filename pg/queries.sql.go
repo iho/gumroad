@@ -39,17 +39,17 @@ values
 `
 
 type CreateProductParams struct {
-	Name         string         `json:"name"`
-	Price        sql.NullInt32  `json:"price"`
-	Description  sql.NullString `json:"description"`
-	Summary      sql.NullString `json:"summary"`
-	Calltoaction sql.NullString `json:"calltoaction"`
-	Coverimage   sql.NullString `json:"coverimage"`
-	Slug         sql.NullString `json:"slug"`
-	Ispablished  bool           `json:"ispablished"`
-	Receipt      sql.NullString `json:"receipt"`
-	Content      sql.NullString `json:"content"`
-	UserID       sql.NullInt32  `json:"user_id"`
+	Name         string        `json:"name"`
+	Price        sql.NullInt32 `json:"price"`
+	Description  string        `json:"description"`
+	Summary      string        `json:"summary"`
+	Calltoaction string        `json:"calltoaction"`
+	Coverimage   string        `json:"coverimage"`
+	Slug         string        `json:"slug"`
+	Ispablished  bool          `json:"ispablished"`
+	Receipt      string        `json:"receipt"`
+	Content      string        `json:"content"`
+	UserID       sql.NullInt32 `json:"user_id"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
@@ -86,6 +86,34 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 	return i, err
 }
 
+const createUser = `-- name: CreateUser :one
+insert into public.users (username, "name", bio)
+values
+  ($1, $2, $3)
+  returning id, username, name, bio, created_at, updated_at, last_active_at
+`
+
+type CreateUserParams struct {
+	Username string `json:"username"`
+	Name     string `json:"name"`
+	Bio      string `json:"bio"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Name, arg.Bio)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Name,
+		&i.Bio,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.LastActiveAt,
+	)
+	return i, err
+}
+
 const getProduct = `-- name: GetProduct :one
 select
   name,
@@ -104,16 +132,16 @@ where
 `
 
 type GetProductRow struct {
-	Name         string         `json:"name"`
-	Price        sql.NullInt32  `json:"price"`
-	Description  sql.NullString `json:"description"`
-	Summary      sql.NullString `json:"summary"`
-	Calltoaction sql.NullString `json:"calltoaction"`
-	Coverimage   sql.NullString `json:"coverimage"`
-	Slug         sql.NullString `json:"slug"`
-	Ispablished  bool           `json:"ispablished"`
-	Receipt      sql.NullString `json:"receipt"`
-	Content      sql.NullString `json:"content"`
+	Name         string        `json:"name"`
+	Price        sql.NullInt32 `json:"price"`
+	Description  string        `json:"description"`
+	Summary      string        `json:"summary"`
+	Calltoaction string        `json:"calltoaction"`
+	Coverimage   string        `json:"coverimage"`
+	Slug         string        `json:"slug"`
+	Ispablished  bool          `json:"ispablished"`
+	Receipt      string        `json:"receipt"`
+	Content      string        `json:"content"`
 }
 
 func (q *Queries) GetProduct(ctx context.Context, id int32) (GetProductRow, error) {
@@ -150,16 +178,16 @@ from public.products as p
 `
 
 type GetProductsRow struct {
-	Name         string         `json:"name"`
-	Price        sql.NullInt32  `json:"price"`
-	Description  sql.NullString `json:"description"`
-	Summary      sql.NullString `json:"summary"`
-	Calltoaction sql.NullString `json:"calltoaction"`
-	Coverimage   sql.NullString `json:"coverimage"`
-	Slug         sql.NullString `json:"slug"`
-	Ispablished  bool           `json:"ispablished"`
-	Receipt      sql.NullString `json:"receipt"`
-	Content      sql.NullString `json:"content"`
+	Name         string        `json:"name"`
+	Price        sql.NullInt32 `json:"price"`
+	Description  string        `json:"description"`
+	Summary      string        `json:"summary"`
+	Calltoaction string        `json:"calltoaction"`
+	Coverimage   string        `json:"coverimage"`
+	Slug         string        `json:"slug"`
+	Ispablished  bool          `json:"ispablished"`
+	Receipt      string        `json:"receipt"`
+	Content      string        `json:"content"`
 }
 
 func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
@@ -197,7 +225,8 @@ func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
 }
 
 const getUser = `-- name: GetUser :one
-select id, username, name, bio, created_at, updated_at, last_active_at 
+select
+  id, username, name, bio, created_at, updated_at, last_active_at
 from public.users
 where
   id = $1

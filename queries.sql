@@ -63,4 +63,5 @@ where
 -- name: CreateUser :one
 insert into public.users (username, "name", bio)
 values
-  ($1, $2, $3);
+  ($1, $2, $3)
+  returning *;
