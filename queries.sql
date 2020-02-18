@@ -56,12 +56,21 @@ select
 from public.products as p;
 -- name: GetUser :one
 select
-  *
+  id,
+  username,
+  name,
+  bio
 from public.users
 where
   id = $1;
 -- name: CreateUser :one
 insert into public.users (username, "name", bio)
 values
-  ($1, $2, $3)
-  returning *;
+  ($1, $2, $3) returning *;
+-- name: PublishProduct :one
+update public.products
+set
+  isPablished = true
+where
+  id = $1
+returning *;

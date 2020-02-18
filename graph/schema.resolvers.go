@@ -28,10 +28,8 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 		Receipt:      input.Receipt,
 		Content:      input.Content,
 		Ispablished:  input.IsPablished,
-		UserID:       sql.NullInt32{Int32: 1},
+		UserID:       sql.NullInt32{Int32: 1, Valid: true}, // TODO take user ID
 	})
-	fmt.Println(input)
-	fmt.Println(product)
 	if err != nil {
 		return nil, err
 	}
@@ -39,16 +37,16 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 }
 
 func (r *mutationResolver) PublishProduct(ctx context.Context, input model.PublishProduct) (*pg.Product, error) {
-	panic(fmt.Errorf("not implemented"))
+	product, err := r.Repository.PublishProduct(ctx, input.ProductID)
+	return &product, err
 }
 
 func (r *productResolver) User(ctx context.Context, obj *pg.Product) (*pg.User, error) {
-	user, err := r.Repository.GetUser(ctx, obj.UserID.Int32)
-	fmt.Println("User")
-	fmt.Println(obj)
+	userRow, err := r.Repository.GetUser(ctx, obj.UserID.Int32)
 	if err != nil {
 		return nil, err
 	}
+	user := pg.User{ID: userRow.ID, Name: userRow.Name, Username: userRow.Username}
 	return &user, nil
 }
 
@@ -57,7 +55,23 @@ func (r *productResolver) Price(ctx context.Context, obj *pg.Product) (int32, er
 }
 
 func (r *queryResolver) Product(ctx context.Context, id int32) (*pg.Product, error) {
-	panic(fmt.Errorf("not implemented"))
+	productRow, err := r.Repository.GetProduct(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	product := pg.Product{
+		Name:         productRow.Name,
+		Price:        productRow.Price,
+		Description:  productRow.Description,
+		Summary:      productRow.Summary,
+		Calltoaction: productRow.Calltoaction,
+		Coverimage:   productRow.Coverimage,
+		Slug:         productRow.Slug,
+		Receipt:      productRow.Receipt,
+		Content:      productRow.Content,
+		Ispablished:  productRow.Ispablished,
+	}
+	return &product, nil
 }
 
 func (r *queryResolver) Products(ctx context.Context, userID *int32, count *int32, after *int32) ([]pg.Product, error) {
@@ -75,32 +89,3 @@ func (r *Resolver) Query() generated.QueryResolver       { return &queryResolver
 type mutationResolver struct{ *Resolver }
 type productResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-
-// func (r *productResolver) Description(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Description, nil
-// }
-// func (r *productResolver) Summary(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Summary, nil
-// }
-// func (r *productResolver) CallToAction(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Calltoaction, nil
-// }
-// func (r *productResolver) CoverImage(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Coverimage, nil
-// }
-// func (r *productResolver) Slug(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Slug, nil
-// }
-// func (r *productResolver) Receipt(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Receipt, nil
-// }
-// func (r *productResolver) Content(ctx context.Context, obj *pg.Product) (*string, error) {
-// 	return &obj.Content, nil
-// }

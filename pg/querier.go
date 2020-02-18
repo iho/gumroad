@@ -11,7 +11,8 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetProduct(ctx context.Context, id int32) (GetProductRow, error)
 	GetProducts(ctx context.Context) ([]GetProductsRow, error)
-	GetUser(ctx context.Context, id int32) (User, error)
+	GetUser(ctx context.Context, id int32) (GetUserRow, error)
+	PublishProduct(ctx context.Context, id int32) (Product, error)
 }
 
 var _ Querier = (*Queries)(nil)
