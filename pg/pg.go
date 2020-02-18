@@ -11,9 +11,9 @@ import (
 // Repository is the application's data layer functionality.
 type Repository interface {
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
-	GetProduct(ctx context.Context, id int32) (GetProductRow, error)
-	GetProducts(ctx context.Context) ([]GetProductsRow, error)
-	GetUser(ctx context.Context, id int32) (GetUserRow, error)
+	GetProduct(ctx context.Context, id int32) (Product, error)
+	GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error)
+	GetUser(ctx context.Context, id int32) (User, error)
 	PublishProduct(ctx context.Context, id int32) (Product, error)
 }
 

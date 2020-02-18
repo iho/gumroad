@@ -55,27 +55,35 @@ func (r *productResolver) Price(ctx context.Context, obj *pg.Product) (int32, er
 }
 
 func (r *queryResolver) Product(ctx context.Context, id int32) (*pg.Product, error) {
-	productRow, err := r.Repository.GetProduct(ctx, id)
+	product, err := r.Repository.GetProduct(ctx, id)
 	if err != nil {
 		return nil, err
-	}
-	product := pg.Product{
-		Name:         productRow.Name,
-		Price:        productRow.Price,
-		Description:  productRow.Description,
-		Summary:      productRow.Summary,
-		Calltoaction: productRow.Calltoaction,
-		Coverimage:   productRow.Coverimage,
-		Slug:         productRow.Slug,
-		Receipt:      productRow.Receipt,
-		Content:      productRow.Content,
-		Ispablished:  productRow.Ispablished,
 	}
 	return &product, nil
 }
 
 func (r *queryResolver) Products(ctx context.Context, userID *int32, count *int32, after *int32) ([]pg.Product, error) {
-	panic(fmt.Errorf("not implemented"))
+	userId := sql.NullInt32{Int32: 0, Valid: false}
+	if userID != nil {
+		userId.Int32 = *userID
+	}
+
+	var afterID int32 = 0
+	if after != nil {
+		afterID = *after
+	}
+
+	var limit int32 = 100
+	if count != nil {
+		limit = *count
+	}
+
+	products, err := r.Repository.GetProducts(ctx, pg.GetProductsParams{
+		UserID: userId,
+		ID:     afterID,
+		Limit:  limit,
+	})
+	return products, err
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.ExtendedUser, error) {

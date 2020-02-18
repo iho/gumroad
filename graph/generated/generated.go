@@ -440,7 +440,7 @@ type Product {
 
 type Query {
   product(id: ID!): Product!
-  products(userId: ID, count: Int, after: Int): [Product!]!
+  products(userId: ID, count: Int=100, after: Int): [Product!]!
   me: ExtendedUser!
 }
 

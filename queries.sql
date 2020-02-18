@@ -28,38 +28,20 @@ values
   ) returning *;
 -- name: GetProduct :one
 select
-  name,
-  price,
-  description,
-  summary,
-  callToAction,
-  coverImage,
-  slug,
-  isPablished,
-  receipt,
-  content
+  *
 from public.products
 where
   id = $1;
 -- name: GetProducts :many
 select
-  p."name",
-  p.price,
-  p.description,
-  p.summary,
-  p.callToAction,
-  p.coverImage,
-  p.slug,
-  p.isPablished,
-  p.receipt,
-  p.content
-from public.products as p;
+  *
+from public.products
+where
+  user_id = $1 or $1 is null
+  and id > $2 limit $3;
 -- name: GetUser :one
 select
-  id,
-  username,
-  name,
-  bio
+  *
 from public.users
 where
   id = $1;
@@ -72,5 +54,4 @@ update public.products
 set
   isPablished = true
 where
-  id = $1
-returning *;
+  id = $1 returning *;

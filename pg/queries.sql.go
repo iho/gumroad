@@ -115,40 +115,20 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 const getProduct = `-- name: GetProduct :one
 select
-  name,
-  price,
-  description,
-  summary,
-  callToAction,
-  coverImage,
-  slug,
-  isPablished,
-  receipt,
-  content
+  id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
 from public.products
 where
   id = $1
 `
 
-type GetProductRow struct {
-	Name         string        `json:"name"`
-	Price        sql.NullInt32 `json:"price"`
-	Description  string        `json:"description"`
-	Summary      string        `json:"summary"`
-	Calltoaction string        `json:"calltoaction"`
-	Coverimage   string        `json:"coverimage"`
-	Slug         string        `json:"slug"`
-	Ispablished  bool          `json:"ispablished"`
-	Receipt      string        `json:"receipt"`
-	Content      string        `json:"content"`
-}
-
-func (q *Queries) GetProduct(ctx context.Context, id int32) (GetProductRow, error) {
+func (q *Queries) GetProduct(ctx context.Context, id int32) (Product, error) {
 	row := q.db.QueryRowContext(ctx, getProduct, id)
-	var i GetProductRow
+	var i Product
 	err := row.Scan(
-		&i.Name,
+		&i.ID,
+		&i.UserID,
 		&i.Price,
+		&i.Name,
 		&i.Description,
 		&i.Summary,
 		&i.Calltoaction,
@@ -157,50 +137,41 @@ func (q *Queries) GetProduct(ctx context.Context, id int32) (GetProductRow, erro
 		&i.Ispablished,
 		&i.Receipt,
 		&i.Content,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getProducts = `-- name: GetProducts :many
 select
-  p."name",
-  p.price,
-  p.description,
-  p.summary,
-  p.callToAction,
-  p.coverImage,
-  p.slug,
-  p.isPablished,
-  p.receipt,
-  p.content
-from public.products as p
+  id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
+from public.products
+where
+  user_id = $1 or $1 is null
+  and id > $2 limit $3
 `
 
-type GetProductsRow struct {
-	Name         string        `json:"name"`
-	Price        sql.NullInt32 `json:"price"`
-	Description  string        `json:"description"`
-	Summary      string        `json:"summary"`
-	Calltoaction string        `json:"calltoaction"`
-	Coverimage   string        `json:"coverimage"`
-	Slug         string        `json:"slug"`
-	Ispablished  bool          `json:"ispablished"`
-	Receipt      string        `json:"receipt"`
-	Content      string        `json:"content"`
+type GetProductsParams struct {
+	UserID sql.NullInt32 `json:"user_id"`
+	ID     int32         `json:"id"`
+	Limit  int32         `json:"limit"`
 }
 
-func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getProducts)
+func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, getProducts, arg.UserID, arg.ID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetProductsRow
+	var items []Product
 	for rows.Next() {
-		var i GetProductsRow
+		var i Product
 		if err := rows.Scan(
-			&i.Name,
+			&i.ID,
+			&i.UserID,
 			&i.Price,
+			&i.Name,
 			&i.Description,
 			&i.Summary,
 			&i.Calltoaction,
@@ -209,6 +180,8 @@ func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
 			&i.Ispablished,
 			&i.Receipt,
 			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -225,30 +198,23 @@ func (q *Queries) GetProducts(ctx context.Context) ([]GetProductsRow, error) {
 
 const getUser = `-- name: GetUser :one
 select
-  id,
-  username,
-  name,
-  bio
+  id, username, name, bio, created_at, updated_at, last_active_at
 from public.users
 where
   id = $1
 `
 
-type GetUserRow struct {
-	ID       int32  `json:"id"`
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Bio      string `json:"bio"`
-}
-
-func (q *Queries) GetUser(ctx context.Context, id int32) (GetUserRow, error) {
+func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
-	var i GetUserRow
+	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.Name,
 		&i.Bio,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.LastActiveAt,
 	)
 	return i, err
 }
@@ -258,8 +224,7 @@ update public.products
 set
   isPablished = true
 where
-  id = $1
-returning id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
+  id = $1 returning id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
 `
 
 func (q *Queries) PublishProduct(ctx context.Context, id int32) (Product, error) {
