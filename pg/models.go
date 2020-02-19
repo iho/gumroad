@@ -33,12 +33,14 @@ type Product struct {
 }
 
 type User struct {
-	ID           int32         `json:"id"`
-	Username     string        `json:"username"`
-	Name         string        `json:"name"`
-	Bio          string        `json:"bio"`
-	Balance      sql.NullInt32 `json:"balance"`
-	CreatedAt    sql.NullTime  `json:"created_at"`
-	UpdatedAt    sql.NullTime  `json:"updated_at"`
-	LastActiveAt sql.NullTime  `json:"last_active_at"`
+	ID           int32          `json:"id"`
+	Username     string         `json:"username"`
+	Name         string         `json:"name"`
+	Bio          string         `json:"bio"`
+	Balance      sql.NullInt32  `json:"balance"`
+	Password     sql.NullString `json:"password"`
+	Email        sql.NullString `json:"email"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	LastActiveAt sql.NullTime   `json:"last_active_at"`
 }

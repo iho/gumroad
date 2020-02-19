@@ -15,6 +15,8 @@ type Repository interface {
 	GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error)
 	GetUser(ctx context.Context, id int32) (User, error)
 	PublishProduct(ctx context.Context, id int32) (Product, error)
+	UserExists(ctx context.Context, arg UserExistsParams) (int32, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 }
 
 type repoSvc struct {

@@ -87,19 +87,27 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 }
 
 const createUser = `-- name: CreateUser :one
-insert into public.users (username, "name", bio)
+insert into public.users (username, "name", bio, email, password)
 values
-  ($1, $2, $3) returning id, username, name, bio, balance, created_at, updated_at, last_active_at
+  ($1, $2, $3, $4, $5) returning id, username, name, bio, balance, password, email, created_at, updated_at, last_active_at
 `
 
 type CreateUserParams struct {
-	Username string `json:"username"`
-	Name     string `json:"name"`
-	Bio      string `json:"bio"`
+	Username string         `json:"username"`
+	Name     string         `json:"name"`
+	Bio      string         `json:"bio"`
+	Email    sql.NullString `json:"email"`
+	Password sql.NullString `json:"password"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Name, arg.Bio)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Username,
+		arg.Name,
+		arg.Bio,
+		arg.Email,
+		arg.Password,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -107,6 +115,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Name,
 		&i.Bio,
 		&i.Balance,
+		&i.Password,
+		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.LastActiveAt,
@@ -149,10 +159,13 @@ select
   id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
 from public.products
 where
-  user_id = $1 or $1 is null
+  user_id = $1
+  or $1 is null
   and id > $2
-  order by id asc
-  limit $3
+order by
+  id asc
+limit
+  $3
 `
 
 type GetProductsParams struct {
@@ -201,7 +214,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Pro
 
 const getUser = `-- name: GetUser :one
 select
-  id, username, name, bio, balance, created_at, updated_at, last_active_at
+  id, username, name, bio, balance, password, email, created_at, updated_at, last_active_at
 from public.users
 where
   id = $1
@@ -216,6 +229,8 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.Name,
 		&i.Bio,
 		&i.Balance,
+		&i.Password,
+		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.LastActiveAt,
@@ -251,4 +266,25 @@ func (q *Queries) PublishProduct(ctx context.Context, id int32) (Product, error)
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const userExists = `-- name: UserExists :one
+select
+  id
+from public.users
+where
+  email = $1
+  and password = $2
+`
+
+type UserExistsParams struct {
+	Email    sql.NullString `json:"email"`
+	Password sql.NullString `json:"password"`
+}
+
+func (q *Queries) UserExists(ctx context.Context, arg UserExistsParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, userExists, arg.Email, arg.Password)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }

@@ -11,6 +11,7 @@ type ExtendedUser {
   name: String!
   bio: String!
   balance: Int!
+  email: String!
 }
 
 type Product {
@@ -68,7 +69,6 @@ type Mutation {
   publishProduct(input: PublishProduct!): Product!
   signup(email: String!, password: String!, username: String!, name: String): String!
   login(email: String!, password: String!): String!
-  
 }
 
 scalar Timestamp

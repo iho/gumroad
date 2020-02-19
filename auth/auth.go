@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,32 +30,23 @@ type contextKey struct {
 func Middleware(db *sql.DB, repo pg.Repository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-			// Allow unauthenticated users in
-			octx := r.Context()
-			_, claims, err := jwtauth.FromContext(octx)
-			fmt.Println(claims)
+			_, claims, err := jwtauth.FromContext(r.Context())
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
 			}
-
 			userIDstring, _ := claims["user_id"]
-
-			// id, ok := int32(userID)
 			userID := userIDstring.(string)
 			id, err := strconv.Atoi(userID)
 			if err != nil {
 				id = -1
 			}
-			// get the user from the database
-			fmt.Println(id)
-			user, err := repo.GetUser(octx, int32(id))
+			user, err := repo.GetUser(r.Context(), int32(id))
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
 			}
-			ctx := context.WithValue(octx, userCtxKey, &user)
+			ctx := context.WithValue(r.Context(), userCtxKey, &user)
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})

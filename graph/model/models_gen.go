@@ -12,6 +12,7 @@ type ExtendedUser struct {
 	Name     string `json:"name"`
 	Bio      string `json:"bio"`
 	Balance  int32  `json:"balance"`
+	Email    string `json:"email"`
 }
 
 type NewProduct struct {

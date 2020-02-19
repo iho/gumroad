@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/iho/gumroad/auth"
 	"github.com/iho/gumroad/graph/generated"
 	"github.com/iho/gumroad/graph/model"
@@ -50,12 +50,34 @@ func (r *mutationResolver) PublishProduct(ctx context.Context, input model.Publi
 }
 
 func (r *mutationResolver) Signup(ctx context.Context, email string, password string, username string, name *string) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	safeName := ""
+	if name != nil {
+		safeName = *name
+	}
+	user, err := r.Repository.CreateUser(ctx, pg.CreateUserParams{
+		Email:    sql.NullString{String: email, Valid: true},
+		Password: sql.NullString{String: password, Valid: true},
+		Username: username,
+		Name:     safeName,
+	})
+	if err == nil {
+		_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": string(user.ID)})
+		return tokenString, nil
+	}
+	return "", gqlerror.Errorf("Some error occurred")
 }
 
 func (r *mutationResolver) Login(ctx context.Context, email string, password string) (string, error) {
-	_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": "1"})
-	return tokenString, nil
+	userID, err := r.Repository.UserExists(ctx, pg.UserExistsParams{
+		Email:    sql.NullString{String: email, Valid: true},
+		Password: sql.NullString{String: password, Valid: true},
+	})
+	if err == nil {
+
+		_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": string(userID)})
+		return tokenString, nil
+	}
+	return "", gqlerror.Errorf("No user with current credentials.")
 }
 
 func (r *productResolver) User(ctx context.Context, obj *pg.Product) (*pg.User, error) {
@@ -109,7 +131,6 @@ func (r *queryResolver) Me(ctx context.Context) (*model.ExtendedUser, error) {
 		return converUserToExtendedUser(user), nil
 	}
 	return nil, gqlerror.Errorf("user is not logined :(")
-
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }

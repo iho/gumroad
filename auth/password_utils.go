@@ -36,12 +36,12 @@ func main() {
 		keyLength:   32,
 	}
 
-	encodedHash, err := generateFromPassword("password123", p)
+	encodedHash, err := GenerateFromPassword("password123", p)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(encodedHash)
-	match, err := comparePasswordAndHash("password123", encodedHash)
+	match, err := ComparePasswordAndHash("password123", encodedHash)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func main() {
 	fmt.Printf("Match: %v\n", match)
 }
 
-func comparePasswordAndHash(password, encodedHash string) (match bool, err error) {
+func ComparePasswordAndHash(password, encodedHash string) (match bool, err error) {
 	// Extract the parameters, salt and derived key from the encoded password
 	// hash.
 	p, salt, hash, err := decodeHash(encodedHash)
@@ -105,7 +105,7 @@ func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
 	return p, salt, hash, nil
 }
 
-func generateFromPassword(password string, p *params) (encodedHash string, err error) {
+func GenerateFromPassword(password string, p *params) (encodedHash string, err error) {
 	salt, err := generateRandomBytes(p.saltLength)
 	if err != nil {
 		return "", err

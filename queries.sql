@@ -37,10 +37,13 @@ select
   *
 from public.products
 where
-  user_id = $1 or $1 is null
+  user_id = $1
+  or $1 is null
   and id > $2
-  order by id asc
-  limit $3 ;
+order by
+  id asc
+limit
+  $3;
 -- name: GetUser :one
 select
   *
@@ -48,12 +51,19 @@ from public.users
 where
   id = $1;
 -- name: CreateUser :one
-insert into public.users (username, "name", bio)
+insert into public.users (username, "name", bio, email, password)
 values
-  ($1, $2, $3) returning *;
+  ($1, $2, $3, $4, $5) returning *;
 -- name: PublishProduct :one
 update public.products
 set
   isPablished = true
 where
   id = $1 returning *;
+-- name: UserExists :one
+select
+  id
+from public.users
+where
+  email = $1
+  and password = $2;
