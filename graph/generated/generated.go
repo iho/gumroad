@@ -56,7 +56,9 @@ type ComplexityRoot struct {
 	Mutation struct {
 		BuyProduct     func(childComplexity int, input *model.BuyProduct) int
 		CreateProduct  func(childComplexity int, input model.NewProduct) int
+		Login          func(childComplexity int, email string, password string) int
 		PublishProduct func(childComplexity int, input model.PublishProduct) int
+		Signup         func(childComplexity int, email string, password string, username string, name *string) int
 	}
 
 	PayResponse struct {
@@ -96,6 +98,8 @@ type MutationResolver interface {
 	BuyProduct(ctx context.Context, input *model.BuyProduct) (*model.PayResponse, error)
 	CreateProduct(ctx context.Context, input model.NewProduct) (*pg.Product, error)
 	PublishProduct(ctx context.Context, input model.PublishProduct) (*pg.Product, error)
+	Signup(ctx context.Context, email string, password string, username string, name *string) (string, error)
+	Login(ctx context.Context, email string, password string) (string, error)
 }
 type ProductResolver interface {
 	User(ctx context.Context, obj *pg.Product) (*pg.User, error)
@@ -181,6 +185,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateProduct(childComplexity, args["input"].(model.NewProduct)), true
 
+	case "Mutation.login":
+		if e.complexity.Mutation.Login == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Login(childComplexity, args["email"].(string), args["password"].(string)), true
+
 	case "Mutation.publishProduct":
 		if e.complexity.Mutation.PublishProduct == nil {
 			break
@@ -192,6 +208,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.PublishProduct(childComplexity, args["input"].(model.PublishProduct)), true
+
+	case "Mutation.signup":
+		if e.complexity.Mutation.Signup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_signup_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Signup(childComplexity, args["email"].(string), args["password"].(string), args["username"].(string), args["name"].(*string)), true
 
 	case "PayResponse.url":
 		if e.complexity.PayResponse.URL == nil {
@@ -475,6 +503,9 @@ type Mutation {
   buyProduct(input: BuyProduct): PayResponse!
   createProduct(input: NewProduct!): Product!
   publishProduct(input: PublishProduct!): Product!
+  signup(email: String!, password: String!, username: String!, name: String): String!
+  login(email: String!, password: String!): String!
+  
 }
 
 scalar Timestamp`, BuiltIn: false},
@@ -513,6 +544,28 @@ func (ec *executionContext) field_Mutation_createProduct_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_publishProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -524,6 +577,44 @@ func (ec *executionContext) field_Mutation_publishProduct_args(ctx context.Conte
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_signup_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["email"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["username"]; ok {
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg2
+	var arg3 *string
+	if tmp, ok := rawArgs["name"]; ok {
+		arg3, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg3
 	return args, nil
 }
 
@@ -912,6 +1003,88 @@ func (ec *executionContext) _Mutation_publishProduct(ctx context.Context, field 
 	res := resTmp.(*pg.Product)
 	fc.Result = res
 	return ec.marshalNProduct2ᚖgithubᚗcomᚋihoᚋgumroadᚋpgᚐProduct(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_signup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_signup_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Signup(rctx, args["email"].(string), args["password"].(string), args["username"].(string), args["name"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_login_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Login(rctx, args["email"].(string), args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PayResponse_url(ctx context.Context, field graphql.CollectedField, obj *model.PayResponse) (ret graphql.Marshaler) {
@@ -2904,6 +3077,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "publishProduct":
 			out.Values[i] = ec._Mutation_publishProduct(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "signup":
+			out.Values[i] = ec._Mutation_signup(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "login":
+			out.Values[i] = ec._Mutation_login(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

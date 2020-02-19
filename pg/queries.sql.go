@@ -89,7 +89,7 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 const createUser = `-- name: CreateUser :one
 insert into public.users (username, "name", bio)
 values
-  ($1, $2, $3) returning id, username, name, bio, created_at, updated_at, last_active_at
+  ($1, $2, $3) returning id, username, name, bio, balance, created_at, updated_at, last_active_at
 `
 
 type CreateUserParams struct {
@@ -106,6 +106,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Username,
 		&i.Name,
 		&i.Bio,
+		&i.Balance,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.LastActiveAt,
@@ -149,7 +150,9 @@ select
 from public.products
 where
   user_id = $1 or $1 is null
-  and id > $2 limit $3
+  and id > $2
+  order by id asc
+  limit $3
 `
 
 type GetProductsParams struct {
@@ -198,7 +201,7 @@ func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Pro
 
 const getUser = `-- name: GetUser :one
 select
-  id, username, name, bio, created_at, updated_at, last_active_at
+  id, username, name, bio, balance, created_at, updated_at, last_active_at
 from public.users
 where
   id = $1
@@ -212,6 +215,7 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 		&i.Username,
 		&i.Name,
 		&i.Bio,
+		&i.Balance,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.LastActiveAt,

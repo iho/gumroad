@@ -30,6 +30,7 @@ create table public.users (
   username text not null,
   "name" text not null,
   bio text not null,
+  balance int default 0,
   created_at timestamp without time zone,
   updated_at timestamp without time zone,
   last_active_at timestamp without time zone,

@@ -38,7 +38,9 @@ select
 from public.products
 where
   user_id = $1 or $1 is null
-  and id > $2 limit $3;
+  and id > $2
+  order by id asc
+  limit $3 ;
 -- name: GetUser :one
 select
   *

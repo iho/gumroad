@@ -7,9 +7,12 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/dgrijalva/jwt-go"
+	"github.com/iho/gumroad/auth"
 	"github.com/iho/gumroad/graph/generated"
 	"github.com/iho/gumroad/graph/model"
 	"github.com/iho/gumroad/pg"
+	"github.com/vektah/gqlparser/gqlerror"
 )
 
 func (r *mutationResolver) BuyProduct(ctx context.Context, input *model.BuyProduct) (*model.PayResponse, error) {
@@ -17,6 +20,11 @@ func (r *mutationResolver) BuyProduct(ctx context.Context, input *model.BuyProdu
 }
 
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewProduct) (*pg.Product, error) {
+	user, ok := auth.ForContext(ctx)
+	if !ok {
+		return nil, gqlerror.Errorf("user is not logined :(")
+	}
+
 	product, err := r.Repository.CreateProduct(ctx, pg.CreateProductParams{
 		Name:         input.Name,
 		Price:        sql.NullInt32{Int32: input.Price, Valid: true},
@@ -28,7 +36,7 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 		Receipt:      input.Receipt,
 		Content:      input.Content,
 		Ispablished:  input.IsPablished,
-		UserID:       sql.NullInt32{Int32: 1, Valid: true}, // TODO take user ID
+		UserID:       sql.NullInt32{Int32: user.ID, Valid: true},
 	})
 	if err != nil {
 		return nil, err
@@ -39,6 +47,15 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 func (r *mutationResolver) PublishProduct(ctx context.Context, input model.PublishProduct) (*pg.Product, error) {
 	product, err := r.Repository.PublishProduct(ctx, input.ProductID)
 	return &product, err
+}
+
+func (r *mutationResolver) Signup(ctx context.Context, email string, password string, username string, name *string) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) Login(ctx context.Context, email string, password string) (string, error) {
+	_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": "1"})
+	return tokenString, nil
 }
 
 func (r *productResolver) User(ctx context.Context, obj *pg.Product) (*pg.User, error) {
@@ -87,7 +104,12 @@ func (r *queryResolver) Products(ctx context.Context, userID *int32, count *int3
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*model.ExtendedUser, error) {
-	panic(fmt.Errorf("not implemented"))
+	user, ok := auth.ForContext(ctx)
+	if ok {
+		return converUserToExtendedUser(user), nil
+	}
+	return nil, gqlerror.Errorf("user is not logined :(")
+
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }

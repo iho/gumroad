@@ -66,6 +66,9 @@ type Mutation {
   buyProduct(input: BuyProduct): PayResponse!
   createProduct(input: NewProduct!): Product!
   publishProduct(input: PublishProduct!): Product!
+  signup(email: String!, password: String!, username: String!, name: String): String!
+  login(email: String!, password: String!): String!
+  
 }
 
 scalar Timestamp
