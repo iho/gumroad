@@ -18,6 +18,18 @@ var (
 	// ErrIncompatibleVersion is error
 	ErrIncompatibleVersion = errors.New("incompatible version of argon2")
 )
+var defaultParams *params
+
+func init() {
+	defaultParams = &params{
+		memory:      64 * 1024,
+		iterations:  3,
+		parallelism: 2,
+		saltLength:  16,
+		keyLength:   32,
+	}
+
+}
 
 type params struct {
 	memory      uint32
@@ -28,15 +40,8 @@ type params struct {
 }
 
 func main() {
-	p := &params{
-		memory:      64 * 1024,
-		iterations:  3,
-		parallelism: 2,
-		saltLength:  16,
-		keyLength:   32,
-	}
 
-	encodedHash, err := GenerateFromPassword("password123", p)
+	encodedHash, err := GenerateFromPassword("password123")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,6 +54,7 @@ func main() {
 	fmt.Printf("Match: %v\n", match)
 }
 
+// ComparePasswordAndHash checks if password and hash are equal
 func ComparePasswordAndHash(password, encodedHash string) (match bool, err error) {
 	// Extract the parameters, salt and derived key from the encoded password
 	// hash.
@@ -105,7 +111,12 @@ func decodeHash(encodedHash string) (p *params, salt, hash []byte, err error) {
 	return p, salt, hash, nil
 }
 
-func GenerateFromPassword(password string, p *params) (encodedHash string, err error) {
+// GenerateFromPassword generate hashed password
+func GenerateFromPassword(password string) (encodedHash string, err error) {
+	return generateFromPassword(password, defaultParams)
+}
+
+func generateFromPassword(password string, p *params) (encodedHash string, err error) {
 	salt, err := generateRandomBytes(p.saltLength)
 	if err != nil {
 		return "", err

@@ -54,9 +54,10 @@ func (r *mutationResolver) Signup(ctx context.Context, email string, password st
 	if name != nil {
 		safeName = *name
 	}
+	hash, _ := auth.GenerateFromPassword(password)
 	user, err := r.Repository.CreateUser(ctx, pg.CreateUserParams{
 		Email:    sql.NullString{String: email, Valid: true},
-		Password: sql.NullString{String: password, Valid: true},
+		Password: sql.NullString{String: hash, Valid: true},
 		Username: username,
 		Name:     safeName,
 	})
@@ -68,9 +69,10 @@ func (r *mutationResolver) Signup(ctx context.Context, email string, password st
 }
 
 func (r *mutationResolver) Login(ctx context.Context, email string, password string) (string, error) {
+	hash, _ := auth.GenerateFromPassword(password)
 	userID, err := r.Repository.UserExists(ctx, pg.UserExistsParams{
 		Email:    sql.NullString{String: email, Valid: true},
-		Password: sql.NullString{String: password, Valid: true},
+		Password: sql.NullString{String: hash, Valid: true},
 	})
 	if err == nil {
 
