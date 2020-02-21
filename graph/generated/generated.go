@@ -56,7 +56,9 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		BuyProduct     func(childComplexity int, input *model.BuyProduct) int
+		ChangePassword func(childComplexity int, hash *string, password string) int
 		CreateProduct  func(childComplexity int, input model.NewProduct) int
+		ForgotPassword func(childComplexity int, email *string) int
 		Login          func(childComplexity int, email string, password string) int
 		PublishProduct func(childComplexity int, input model.PublishProduct) int
 		Signup         func(childComplexity int, email string, password string, username string, name *string) int
@@ -82,9 +84,10 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Me       func(childComplexity int) int
-		Product  func(childComplexity int, id int32) int
-		Products func(childComplexity int, userID *int32, count *int32, after *int32) int
+		Me         func(childComplexity int) int
+		MyProducts func(childComplexity int, count *int32, after *int32) int
+		Product    func(childComplexity int, username string, slug string) int
+		Products   func(childComplexity int, username *string, count *int32, after *int32) int
 	}
 
 	User struct {
@@ -101,15 +104,18 @@ type MutationResolver interface {
 	PublishProduct(ctx context.Context, input model.PublishProduct) (*pg.Product, error)
 	Signup(ctx context.Context, email string, password string, username string, name *string) (string, error)
 	Login(ctx context.Context, email string, password string) (string, error)
+	ForgotPassword(ctx context.Context, email *string) (*bool, error)
+	ChangePassword(ctx context.Context, hash *string, password string) (*bool, error)
 }
 type ProductResolver interface {
 	User(ctx context.Context, obj *pg.Product) (*pg.User, error)
 	Price(ctx context.Context, obj *pg.Product) (int32, error)
 }
 type QueryResolver interface {
-	Product(ctx context.Context, id int32) (*pg.Product, error)
-	Products(ctx context.Context, userID *int32, count *int32, after *int32) ([]pg.Product, error)
+	Product(ctx context.Context, username string, slug string) (*pg.Product, error)
+	Products(ctx context.Context, username *string, count *int32, after *int32) ([]pg.Product, error)
 	Me(ctx context.Context) (*model.ExtendedUser, error)
+	MyProducts(ctx context.Context, count *int32, after *int32) ([]pg.Product, error)
 }
 
 type executableSchema struct {
@@ -181,6 +187,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.BuyProduct(childComplexity, args["input"].(*model.BuyProduct)), true
 
+	case "Mutation.changePassword":
+		if e.complexity.Mutation.ChangePassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changePassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangePassword(childComplexity, args["hash"].(*string), args["password"].(string)), true
+
 	case "Mutation.createProduct":
 		if e.complexity.Mutation.CreateProduct == nil {
 			break
@@ -192,6 +210,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateProduct(childComplexity, args["input"].(model.NewProduct)), true
+
+	case "Mutation.forgotPassword":
+		if e.complexity.Mutation.ForgotPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_forgotPassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ForgotPassword(childComplexity, args["email"].(*string)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -327,6 +357,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Me(childComplexity), true
 
+	case "Query.myProducts":
+		if e.complexity.Query.MyProducts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myProducts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.MyProducts(childComplexity, args["count"].(*int32), args["after"].(*int32)), true
+
 	case "Query.product":
 		if e.complexity.Query.Product == nil {
 			break
@@ -337,7 +379,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Product(childComplexity, args["id"].(int32)), true
+		return e.complexity.Query.Product(childComplexity, args["username"].(string), args["slug"].(string)), true
 
 	case "Query.products":
 		if e.complexity.Query.Products == nil {
@@ -349,7 +391,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Products(childComplexity, args["userId"].(*int32), args["count"].(*int32), args["after"].(*int32)), true
+		return e.complexity.Query.Products(childComplexity, args["username"].(*string), args["count"].(*int32), args["after"].(*int32)), true
 
 	case "User.bio":
 		if e.complexity.User.Bio == nil {
@@ -476,9 +518,10 @@ type Product {
 }
 
 type Query {
-  product(id: ID!): Product!
-  products(userId: ID, count: Int=100, after: Int): [Product!]!
+  product(username: String!, slug: String!): Product!
+  products(username: String, count: Int=100, after: Int): [Product!]!
   me: ExtendedUser!
+  myProducts(count: Int=100, after: Int): [Product!]!
 }
 
 input NewProduct {
@@ -514,6 +557,8 @@ type Mutation {
   publishProduct(input: PublishProduct!): Product!
   signup(email: String!, password: String!, username: String!, name: String): String!
   login(email: String!, password: String!): String!
+  forgotPassword(email: String): Boolean
+  changePassword(hash: String, password: String!): Boolean
 }
 
 scalar Timestamp`, BuiltIn: false},
@@ -538,6 +583,28 @@ func (ec *executionContext) field_Mutation_buyProduct_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["hash"]; ok {
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["hash"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -549,6 +616,20 @@ func (ec *executionContext) field_Mutation_createProduct_args(ctx context.Contex
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_forgotPassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["email"]; ok {
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg0
 	return args, nil
 }
 
@@ -640,31 +721,61 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_product_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_myProducts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 int32
-	if tmp, ok := rawArgs["id"]; ok {
-		arg0, err = ec.unmarshalNID2int32(ctx, tmp)
+	var arg0 *int32
+	if tmp, ok := rawArgs["count"]; ok {
+		arg0, err = ec.unmarshalOInt2ᚖint32(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["count"] = arg0
+	var arg1 *int32
+	if tmp, ok := rawArgs["after"]; ok {
+		arg1, err = ec.unmarshalOInt2ᚖint32(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_product_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["slug"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["slug"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_products_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *int32
-	if tmp, ok := rawArgs["userId"]; ok {
-		arg0, err = ec.unmarshalOID2ᚖint32(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["username"]; ok {
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
+	args["username"] = arg0
 	var arg1 *int32
 	if tmp, ok := rawArgs["count"]; ok {
 		arg1, err = ec.unmarshalOInt2ᚖint32(ctx, tmp)
@@ -1129,6 +1240,82 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_forgotPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_forgotPassword_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ForgotPassword(rctx, args["email"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_changePassword_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ChangePassword(rctx, args["hash"].(*string), args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _PayResponse_url(ctx context.Context, field graphql.CollectedField, obj *model.PayResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1571,7 +1758,7 @@ func (ec *executionContext) _Query_product(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Product(rctx, args["id"].(int32))
+		return ec.resolvers.Query().Product(rctx, args["username"].(string), args["slug"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1612,7 +1799,7 @@ func (ec *executionContext) _Query_products(ctx context.Context, field graphql.C
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Products(rctx, args["userId"].(*int32), args["count"].(*int32), args["after"].(*int32))
+		return ec.resolvers.Query().Products(rctx, args["username"].(*string), args["count"].(*int32), args["after"].(*int32))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1661,6 +1848,47 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	res := resTmp.(*model.ExtendedUser)
 	fc.Result = res
 	return ec.marshalNExtendedUser2ᚖgithubᚗcomᚋihoᚋgumroadᚋgraphᚋmodelᚐExtendedUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_myProducts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_myProducts_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().MyProducts(rctx, args["count"].(*int32), args["after"].(*int32))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]pg.Product)
+	fc.Result = res
+	return ec.marshalNProduct2ᚕgithubᚗcomᚋihoᚋgumroadᚋpgᚐProductᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3137,6 +3365,10 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "forgotPassword":
+			out.Values[i] = ec._Mutation_forgotPassword(ctx, field)
+		case "changePassword":
+			out.Values[i] = ec._Mutation_changePassword(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3303,6 +3535,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_me(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "myProducts":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_myProducts(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4026,29 +4272,6 @@ func (ec *executionContext) unmarshalOBuyProduct2ᚖgithubᚗcomᚋihoᚋgumroad
 	}
 	res, err := ec.unmarshalOBuyProduct2githubᚗcomᚋihoᚋgumroadᚋgraphᚋmodelᚐBuyProduct(ctx, v)
 	return &res, err
-}
-
-func (ec *executionContext) unmarshalOID2int32(ctx context.Context, v interface{}) (int32, error) {
-	return graphql.UnmarshalInt32(v)
-}
-
-func (ec *executionContext) marshalOID2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
-	return graphql.MarshalInt32(v)
-}
-
-func (ec *executionContext) unmarshalOID2ᚖint32(ctx context.Context, v interface{}) (*int32, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalOID2int32(ctx, v)
-	return &res, err
-}
-
-func (ec *executionContext) marshalOID2ᚖint32(ctx context.Context, sel ast.SelectionSet, v *int32) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec.marshalOID2int32(ctx, sel, *v)
 }
 
 func (ec *executionContext) unmarshalOInt2int32(ctx context.Context, v interface{}) (int32, error) {

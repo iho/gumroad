@@ -9,11 +9,13 @@ import (
 type Querier interface {
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	GetProduct(ctx context.Context, id int32) (Product, error)
+	GetProduct(ctx context.Context, arg GetProductParams) (Product, error)
 	GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error)
 	GetUser(ctx context.Context, id int32) (User, error)
+	GetUserByLoginAndHash(ctx context.Context, arg GetUserByLoginAndHashParams) (int32, error)
+	GetUserProducts(ctx context.Context, arg GetUserProductsParams) ([]Product, error)
+	MyProducts(ctx context.Context, arg MyProductsParams) ([]Product, error)
 	PublishProduct(ctx context.Context, id int32) (Product, error)
-	UserExists(ctx context.Context, arg UserExistsParams) (int32, error)
 }
 
 var _ Querier = (*Queries)(nil)

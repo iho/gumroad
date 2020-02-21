@@ -27,7 +27,7 @@ type contextKey struct {
 // }
 
 // Middleware decodes the share session cookie and packs the session into context
-func Middleware(db *sql.DB, repo pg.Repository) func(http.Handler) http.Handler {
+func Middleware(db *sql.DB, repo pg.Querier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, claims, err := jwtauth.FromContext(r.Context())

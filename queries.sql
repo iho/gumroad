@@ -28,18 +28,42 @@ values
   ) returning *;
 -- name: GetProduct :one
 select
-  *
-from public.products
+  p.*
+from public.products p
+join public.users u on p.user_id = u.id
+  and u.username = $1
 where
-  id = $1;
+  p.slug = $2;
 -- name: GetProducts :many
 select
   *
 from public.products
 where
-  user_id = $1
-  or $1 is null
-  and id > $2
+ id > $1
+order by
+  id asc
+limit
+  $2;
+-- name: GetUserProducts :many
+select
+  p.*
+from public.products p
+inner join public.users u on p.user_id = u.id
+  and u.username = $1
+where
+  p.id > $2
+order by
+  id asc
+limit
+  $3;
+  -- name: MyProducts :many
+select
+  *
+from public.products
+where
+  user_id=$1
+  and 
+  id > $2
 order by
   id asc
 limit
@@ -60,7 +84,7 @@ set
   isPablished = true
 where
   id = $1 returning *;
--- name: UserExists :one
+-- name: GetUserByLoginAndHash :one
 select
   id
 from public.users

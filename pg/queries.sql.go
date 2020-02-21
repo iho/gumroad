@@ -126,14 +126,21 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 
 const getProduct = `-- name: GetProduct :one
 select
-  id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
-from public.products
+  p.id, p.user_id, p.price, p.name, p.description, p.summary, p.calltoaction, p.coverimage, p.slug, p.ispablished, p.receipt, p.content, p.created_at, p.updated_at
+from public.products p
+join public.users u on p.user_id = u.id
+  and u.username = $1
 where
-  id = $1
+  p.slug = $2
 `
 
-func (q *Queries) GetProduct(ctx context.Context, id int32) (Product, error) {
-	row := q.db.QueryRowContext(ctx, getProduct, id)
+type GetProductParams struct {
+	Username string `json:"username"`
+	Slug     string `json:"slug"`
+}
+
+func (q *Queries) GetProduct(ctx context.Context, arg GetProductParams) (Product, error) {
+	row := q.db.QueryRowContext(ctx, getProduct, arg.Username, arg.Slug)
 	var i Product
 	err := row.Scan(
 		&i.ID,
@@ -159,23 +166,20 @@ select
   id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
 from public.products
 where
-  user_id = $1
-  or $1 is null
-  and id > $2
+ id > $1
 order by
   id asc
 limit
-  $3
+  $2
 `
 
 type GetProductsParams struct {
-	UserID sql.NullInt32 `json:"user_id"`
-	ID     int32         `json:"id"`
-	Limit  int32         `json:"limit"`
+	ID    int32 `json:"id"`
+	Limit int32 `json:"limit"`
 }
 
 func (q *Queries) GetProducts(ctx context.Context, arg GetProductsParams) ([]Product, error) {
-	rows, err := q.db.QueryContext(ctx, getProducts, arg.UserID, arg.ID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getProducts, arg.ID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -238,6 +242,143 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	return i, err
 }
 
+const getUserByLoginAndHash = `-- name: GetUserByLoginAndHash :one
+select
+  id
+from public.users
+where
+  email = $1
+  and password = $2
+`
+
+type GetUserByLoginAndHashParams struct {
+	Email    sql.NullString `json:"email"`
+	Password sql.NullString `json:"password"`
+}
+
+func (q *Queries) GetUserByLoginAndHash(ctx context.Context, arg GetUserByLoginAndHashParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, getUserByLoginAndHash, arg.Email, arg.Password)
+	var id int32
+	err := row.Scan(&id)
+	return id, err
+}
+
+const getUserProducts = `-- name: GetUserProducts :many
+select
+  p.id, p.user_id, p.price, p.name, p.description, p.summary, p.calltoaction, p.coverimage, p.slug, p.ispablished, p.receipt, p.content, p.created_at, p.updated_at
+from public.products p
+inner join public.users u on p.user_id = u.id
+  and u.username = $1
+where
+  p.id > $2
+order by
+  id asc
+limit
+  $3
+`
+
+type GetUserProductsParams struct {
+	Username string `json:"username"`
+	ID       int32  `json:"id"`
+	Limit    int32  `json:"limit"`
+}
+
+func (q *Queries) GetUserProducts(ctx context.Context, arg GetUserProductsParams) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, getUserProducts, arg.Username, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Price,
+			&i.Name,
+			&i.Description,
+			&i.Summary,
+			&i.Calltoaction,
+			&i.Coverimage,
+			&i.Slug,
+			&i.Ispablished,
+			&i.Receipt,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const myProducts = `-- name: MyProducts :many
+select
+  id, user_id, price, name, description, summary, calltoaction, coverimage, slug, ispablished, receipt, content, created_at, updated_at
+from public.products
+where
+  user_id=$1
+  and 
+  id > $2
+order by
+  id asc
+limit
+  $3
+`
+
+type MyProductsParams struct {
+	UserID sql.NullInt32 `json:"user_id"`
+	ID     int32         `json:"id"`
+	Limit  int32         `json:"limit"`
+}
+
+func (q *Queries) MyProducts(ctx context.Context, arg MyProductsParams) ([]Product, error) {
+	rows, err := q.db.QueryContext(ctx, myProducts, arg.UserID, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Product
+	for rows.Next() {
+		var i Product
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Price,
+			&i.Name,
+			&i.Description,
+			&i.Summary,
+			&i.Calltoaction,
+			&i.Coverimage,
+			&i.Slug,
+			&i.Ispablished,
+			&i.Receipt,
+			&i.Content,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const publishProduct = `-- name: PublishProduct :one
 update public.products
 set
@@ -266,25 +407,4 @@ func (q *Queries) PublishProduct(ctx context.Context, id int32) (Product, error)
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const userExists = `-- name: UserExists :one
-select
-  id
-from public.users
-where
-  email = $1
-  and password = $2
-`
-
-type UserExistsParams struct {
-	Email    sql.NullString `json:"email"`
-	Password sql.NullString `json:"password"`
-}
-
-func (q *Queries) UserExists(ctx context.Context, arg UserExistsParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, userExists, arg.Email, arg.Password)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
 }

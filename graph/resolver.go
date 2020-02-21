@@ -6,5 +6,5 @@ package graph
 import "github.com/iho/gumroad/pg"
 
 type Resolver struct {
-	Repository pg.Repository
+	Repository pg.Querier
 }

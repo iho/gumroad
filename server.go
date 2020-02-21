@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"os"
 
@@ -21,12 +22,16 @@ import (
 
 const defaultPort = "8080"
 
+func Open(dataSourceName string) (*sql.DB, error) {
+	return sql.Open("postgres", dataSourceName)
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
 	}
-	db, err := pg.Open("user=db_user dbname=db sslmode=disable password=password")
+	db, err := Open("user=db_user dbname=db sslmode=disable password=password")
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +45,7 @@ func main() {
 	}).Handler)
 
 	// initialize the repository
-	repo := pg.NewRepository(db)
+	repo := pg.New(db)
 	router.Use(jwtauth.Verifier(auth.TokenAuth))
 	// router.Use(jwtauth.Authenticator)
 	router.Use(auth.Middleware(db, repo))

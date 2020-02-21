@@ -31,9 +31,10 @@ type Product {
 }
 
 type Query {
-  product(id: ID!): Product!
-  products(userId: ID, count: Int=100, after: Int): [Product!]!
+  product(username: String!, slug: String!): Product!
+  products(username: String, count: Int=100, after: Int): [Product!]!
   me: ExtendedUser!
+  myProducts(count: Int=100, after: Int): [Product!]!
 }
 
 input NewProduct {
@@ -69,6 +70,8 @@ type Mutation {
   publishProduct(input: PublishProduct!): Product!
   signup(email: String!, password: String!, username: String!, name: String): String!
   login(email: String!, password: String!): String!
+  forgotPassword(email: String): Boolean
+  changePassword(hash: String, password: String!): Boolean
 }
 
 scalar Timestamp
