@@ -1,7 +1,5 @@
--- Migration: order
--- Created at: 2020-02-17 15:44:40
--- ====  UP  ====
-BEGIN;
+
+-- +migrate Up
 create table public.orders (
   id serial not null,
   user_id integer references users(id),
@@ -11,8 +9,6 @@ create table public.orders (
   last_active_at timestamp without time zone,
   constraint orders_pk primary key (id)
 );
-COMMIT;
--- ==== DOWN ====
-BEGIN;
-drop table public.orders;
-COMMIT;
+
+-- +migrate Down
+drop table if exists public.orders;

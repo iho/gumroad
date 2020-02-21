@@ -6,4 +6,5 @@ packages:
     emit_interface: true
     path: "pg"
     queries: "./queries.sql"
-    schema: "./schema.sql"
+    schema: "./migrations/"
+    engine: "postgresql"
