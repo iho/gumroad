@@ -8,3 +8,6 @@ watch:
 	watchman -- trigger ./ sqlc 'migrations/*.sql' -- sqlc generate
 	watchman -- trigger ./ gqlgen 'schema.graphqls' -- gqlgen generate
 	nodemon --exec "go run ./server.go"  --watch  "graph/*.go"
+install:
+	go get -v github.com/rubenv/sql-migrate/...
+	sql-migrate up
