@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type BuyProduct struct {
 	ProductID int32 `json:"productId"`
 }
@@ -35,4 +41,53 @@ type PayResponse struct {
 type PublishProduct struct {
 	ProductID int32  `json:"productId"`
 	Slug      string `json:"slug"`
+}
+
+type UserStatus string
+
+const (
+	UserStatusNew          UserStatus = "NEW"
+	UserStatusNeedsConfirm UserStatus = "NEEDS_CONFIRM"
+	UserStatusPwReset      UserStatus = "PW_RESET"
+	UserStatusPhoneReset   UserStatus = "PHONE_RESET"
+	UserStatusSignedin     UserStatus = "SIGNEDIN"
+	UserStatusBanned       UserStatus = "BANNED"
+)
+
+var AllUserStatus = []UserStatus{
+	UserStatusNew,
+	UserStatusNeedsConfirm,
+	UserStatusPwReset,
+	UserStatusPhoneReset,
+	UserStatusSignedin,
+	UserStatusBanned,
+}
+
+func (e UserStatus) IsValid() bool {
+	switch e {
+	case UserStatusNew, UserStatusNeedsConfirm, UserStatusPwReset, UserStatusPhoneReset, UserStatusSignedin, UserStatusBanned:
+		return true
+	}
+	return false
+}
+
+func (e UserStatus) String() string {
+	return string(e)
+}
+
+func (e *UserStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserStatus", str)
+	}
+	return nil
+}
+
+func (e UserStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

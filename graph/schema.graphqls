@@ -33,9 +33,24 @@ type Product {
 type Query {
   product(username: String!, slug: String!): Product!
   products(username: String, count: Int=100, after: Int): [Product!]!
-  me: ExtendedUser!
-  myProducts(count: Int=100, after: Int): [Product!]!
+  myProducts(count: Int=100, after: Int): [Product!]! @authorized()
+  me:  ExtendedUser! @authorized()
 }
+
+
+enum UserStatus {
+  NEW
+  NEEDS_CONFIRM
+  PW_RESET
+  PHONE_RESET
+  SIGNEDIN
+  BANNED
+}
+
+
+directive @authorized on FIELD_DEFINITION
+
+
 
 input NewProduct {
   name: String!
@@ -65,13 +80,14 @@ input PublishProduct {
 }
 
 type Mutation {
-  buyProduct(input: BuyProduct): PayResponse!
-  createProduct(input: NewProduct!): Product!
-  publishProduct(input: PublishProduct!): Product!
+  buyProduct(input: BuyProduct): PayResponse! @authorized()
+  createProduct(input: NewProduct!): Product! @authorized()
+  publishProduct(input: PublishProduct!): Product! @authorized()
   signup(email: String!, password: String!, username: String!, name: String): String!
   login(email: String!, password: String!): String!
   forgotPassword(email: String): Boolean
-  changePassword(hash: String, password: String!): Boolean
+  changePassword(hash: String, password: String!): Boolean @authorized()
 }
 
 scalar Timestamp
+scalar DateTime

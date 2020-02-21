@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -42,6 +43,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	Authorized func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -114,8 +116,8 @@ type ProductResolver interface {
 type QueryResolver interface {
 	Product(ctx context.Context, username string, slug string) (*pg.Product, error)
 	Products(ctx context.Context, username *string, count *int32, after *int32) ([]pg.Product, error)
-	Me(ctx context.Context) (*model.ExtendedUser, error)
 	MyProducts(ctx context.Context, count *int32, after *int32) ([]pg.Product, error)
+	Me(ctx context.Context) (*model.ExtendedUser, error)
 }
 
 type executableSchema struct {
@@ -520,9 +522,24 @@ type Product {
 type Query {
   product(username: String!, slug: String!): Product!
   products(username: String, count: Int=100, after: Int): [Product!]!
-  me: ExtendedUser!
-  myProducts(count: Int=100, after: Int): [Product!]!
+  myProducts(count: Int=100, after: Int): [Product!]! @authorized()
+  me:  ExtendedUser! @authorized()
 }
+
+
+enum UserStatus {
+  NEW
+  NEEDS_CONFIRM
+  PW_RESET
+  PHONE_RESET
+  SIGNEDIN
+  BANNED
+}
+
+
+directive @authorized on FIELD_DEFINITION
+
+
 
 input NewProduct {
   name: String!
@@ -552,16 +569,17 @@ input PublishProduct {
 }
 
 type Mutation {
-  buyProduct(input: BuyProduct): PayResponse!
-  createProduct(input: NewProduct!): Product!
-  publishProduct(input: PublishProduct!): Product!
+  buyProduct(input: BuyProduct): PayResponse! @authorized()
+  createProduct(input: NewProduct!): Product! @authorized()
+  publishProduct(input: PublishProduct!): Product! @authorized()
   signup(email: String!, password: String!, username: String!, name: String): String!
   login(email: String!, password: String!): String!
   forgotPassword(email: String): Boolean
-  changePassword(hash: String, password: String!): Boolean
+  changePassword(hash: String, password: String!): Boolean @authorized()
 }
 
-scalar Timestamp`, BuiltIn: false},
+scalar Timestamp
+scalar DateTime`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -1058,8 +1076,28 @@ func (ec *executionContext) _Mutation_buyProduct(ctx context.Context, field grap
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().BuyProduct(rctx, args["input"].(*model.BuyProduct))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().BuyProduct(rctx, args["input"].(*model.BuyProduct))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorized == nil {
+				return nil, errors.New("directive authorized is not implemented")
+			}
+			return ec.directives.Authorized(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.PayResponse); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/iho/gumroad/graph/model.PayResponse`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1099,8 +1137,28 @@ func (ec *executionContext) _Mutation_createProduct(ctx context.Context, field g
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateProduct(rctx, args["input"].(model.NewProduct))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateProduct(rctx, args["input"].(model.NewProduct))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorized == nil {
+				return nil, errors.New("directive authorized is not implemented")
+			}
+			return ec.directives.Authorized(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*pg.Product); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/iho/gumroad/pg.Product`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1140,8 +1198,28 @@ func (ec *executionContext) _Mutation_publishProduct(ctx context.Context, field 
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().PublishProduct(rctx, args["input"].(model.PublishProduct))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().PublishProduct(rctx, args["input"].(model.PublishProduct))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorized == nil {
+				return nil, errors.New("directive authorized is not implemented")
+			}
+			return ec.directives.Authorized(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*pg.Product); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/iho/gumroad/pg.Product`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1301,8 +1379,28 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ChangePassword(rctx, args["hash"].(*string), args["password"].(string))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().ChangePassword(rctx, args["hash"].(*string), args["password"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorized == nil {
+				return nil, errors.New("directive authorized is not implemented")
+			}
+			return ec.directives.Authorized(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *bool`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1816,40 +1914,6 @@ func (ec *executionContext) _Query_products(ctx context.Context, field graphql.C
 	return ec.marshalNProduct2ᚕgithubᚗcomᚋihoᚋgumroadᚋpgᚐProductᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Me(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.ExtendedUser)
-	fc.Result = res
-	return ec.marshalNExtendedUser2ᚖgithubᚗcomᚋihoᚋgumroadᚋgraphᚋmodelᚐExtendedUser(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_myProducts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1873,8 +1937,28 @@ func (ec *executionContext) _Query_myProducts(ctx context.Context, field graphql
 	}
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().MyProducts(rctx, args["count"].(*int32), args["after"].(*int32))
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().MyProducts(rctx, args["count"].(*int32), args["after"].(*int32))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorized == nil {
+				return nil, errors.New("directive authorized is not implemented")
+			}
+			return ec.directives.Authorized(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]pg.Product); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []github.com/iho/gumroad/pg.Product`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1889,6 +1973,60 @@ func (ec *executionContext) _Query_myProducts(ctx context.Context, field graphql
 	res := resTmp.([]pg.Product)
 	fc.Result = res
 	return ec.marshalNProduct2ᚕgithubᚗcomᚋihoᚋgumroadᚋpgᚐProductᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().Me(rctx)
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.Authorized == nil {
+				return nil, errors.New("directive authorized is not implemented")
+			}
+			return ec.directives.Authorized(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, err
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.ExtendedUser); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/iho/gumroad/graph/model.ExtendedUser`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ExtendedUser)
+	fc.Result = res
+	return ec.marshalNExtendedUser2ᚖgithubᚗcomᚋihoᚋgumroadᚋgraphᚋmodelᚐExtendedUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3526,20 +3664,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "me":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_me(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		case "myProducts":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -3549,6 +3673,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_myProducts(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "me":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_me(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

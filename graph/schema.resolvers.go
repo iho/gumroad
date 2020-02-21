@@ -143,14 +143,6 @@ func (r *queryResolver) Products(ctx context.Context, username *string, count *i
 	return products, err
 }
 
-func (r *queryResolver) Me(ctx context.Context) (*model.ExtendedUser, error) {
-	user, ok := auth.ForContext(ctx)
-	if ok {
-		return converUserToExtendedUser(user), nil
-	}
-	return nil, gqlerror.Errorf("user is not logined :(")
-}
-
 func (r *queryResolver) MyProducts(ctx context.Context, count *int32, after *int32) ([]pg.Product, error) {
 	var afterID int32 = 0
 	if after != nil {
@@ -169,6 +161,15 @@ func (r *queryResolver) MyProducts(ctx context.Context, count *int32, after *int
 			Limit:  limit,
 			UserID: sql.NullInt32{Int32: user.ID, Valid: true},
 		})
+	}
+	return nil, gqlerror.Errorf("user is not logined :(")
+}
+
+func (r *queryResolver) Me(ctx context.Context) (*model.ExtendedUser, error) {
+	user, ok := auth.ForContext(ctx)
+	fmt.Println(user)
+	if ok {
+		return converUserToExtendedUser(user), nil
 	}
 	return nil, gqlerror.Errorf("user is not logined :(")
 }

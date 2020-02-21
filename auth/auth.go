@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -30,12 +31,16 @@ type contextKey struct {
 func Middleware(db *sql.DB, repo pg.Querier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 			_, claims, err := jwtauth.FromContext(r.Context())
+			fmt.Println(err)
+			fmt.Println(claims)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
 			}
 			userIDstring, _ := claims["user_id"]
+
 			userID := userIDstring.(string)
 			id, err := strconv.Atoi(userID)
 			if err != nil {

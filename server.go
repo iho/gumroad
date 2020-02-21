@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"os"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -15,6 +17,7 @@ import (
 	"github.com/iho/gumroad/graph"
 	"github.com/iho/gumroad/graph/generated"
 	"github.com/iho/gumroad/pg"
+	"github.com/vektah/gqlparser/gqlerror"
 
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
@@ -49,15 +52,23 @@ func main() {
 	router.Use(jwtauth.Verifier(auth.TokenAuth))
 	// router.Use(jwtauth.Authenticator)
 	router.Use(auth.Middleware(db, repo))
-
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
+	config := generated.Config{Resolvers: &graph.Resolver{
 		Repository: repo,
-	}}))
+	}}
+	config.Directives.Authorized = func(ctx context.Context, obj interface{}, next graphql.Resolver) (interface{}, error) {
+		_, ok := auth.ForContext(ctx)
+		if ok {
+			return next(ctx)
+		}
+		return "nil", gqlerror.Errorf("user is not logined :(")
+	}
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(config))
+
 	srv.AddTransport(&transport.Websocket{
 		Upgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
 				// Check against your desired domains here
-				return r.Host == "localhost"
+				return r.Host == "dream.market"
 			},
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
