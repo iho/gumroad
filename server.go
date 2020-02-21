@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -27,6 +30,37 @@ const defaultPort = "8080"
 
 func Open(dataSourceName string) (*sql.DB, error) {
 	return sql.Open("postgres", dataSourceName)
+}
+
+func uploadFile(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Uploading File")
+	if err := r.ParseMultipartForm(100 << 20); err != nil {
+		fmt.Println(err)
+	}
+	file, handler, err := r.FormFile("myFile")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+		fmt.Println(err)
+		return
+	}
+
+	defer file.Close()
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+	fmt.Printf("File Size: %+v\n", handler.Size)
+	fmt.Printf("MIME Header: %+v\n", handler.Header)
+
+	saveName := path.Join("/tmp", "ihor", path.Base(handler.Filename))
+	savef, err := os.Create(saveName)
+	if err != nil {
+		// Failed to create file on server, handle err
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+	defer savef.Close()
+
+	if _, err := io.Copy(savef, file); err != nil {
+		fmt.Println("Error")
+	}
 }
 
 func main() {
@@ -76,6 +110,7 @@ func main() {
 	})
 
 	router.Handle("/", playground.Handler("Starwars", "/query"))
+	router.HandleFunc("/upload", uploadFile)
 	router.Handle("/query", srv)
 
 	err = http.ListenAndServe(":8080", router)

@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/iho/gumroad/auth"
 	"github.com/iho/gumroad/graph/generated"
@@ -87,6 +88,10 @@ func (r *mutationResolver) ForgotPassword(ctx context.Context, email *string) (*
 }
 
 func (r *mutationResolver) ChangePassword(ctx context.Context, hash *string, password string) (*bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) SingleUpload(ctx context.Context, file graphql.Upload) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

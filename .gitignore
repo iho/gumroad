@@ -13,3 +13,10 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+#
+.vscode
+graph/generated/generated.go
+graph/model/models_gen.go
+pg/queries.sql.go
+pg/querier.go
+pg/*

@@ -6,5 +6,5 @@ create_db:
 watch:
 	watchman watch ./
 	watchman -- trigger ./ sqlc 'queries.sql' -- sqlc generate
-	watchman -- trigger ./ gqlgen 'graph/schema.graphqls' -- gqlgen generate
+	watchman -- trigger ./ gqlgen 'schema.graphqls' -- gqlgen generate
 	nodemon --exec "go run ./server.go"  --watch  "graph/*.go"

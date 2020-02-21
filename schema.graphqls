@@ -33,24 +33,11 @@ type Product {
 type Query {
   product(username: String!, slug: String!): Product!
   products(username: String, count: Int=100, after: Int): [Product!]!
-  myProducts(count: Int=100, after: Int): [Product!]! @authorized()
-  me:  ExtendedUser! @authorized()
+  myProducts(count: Int=100, after: Int): [Product!]!  @authorized()
+  me: ExtendedUser! @authorized()
 }
 
-
-enum UserStatus {
-  NEW
-  NEEDS_CONFIRM
-  PW_RESET
-  PHONE_RESET
-  SIGNEDIN
-  BANNED
-}
-
-
-directive @authorized on FIELD_DEFINITION
-
-
+directive @authorized on FIELD_DEFINITION | ENUM_VALUE
 
 input NewProduct {
   name: String!
@@ -87,7 +74,9 @@ type Mutation {
   login(email: String!, password: String!): String!
   forgotPassword(email: String): Boolean
   changePassword(hash: String, password: String!): Boolean @authorized()
+  singleUpload(file: Upload!): Boolean!
 }
 
 scalar Timestamp
 scalar DateTime
+scalar Upload
