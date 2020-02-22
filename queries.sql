@@ -39,7 +39,7 @@ select
   *
 from public.products
 where
- id > $1
+  id > $1
 order by
   id asc
 limit
@@ -56,14 +56,13 @@ order by
   id asc
 limit
   $3;
-  -- name: MyProducts :many
+-- name: MyProducts :many
 select
   *
 from public.products
 where
-  user_id=$1
-  and 
-  id > $2
+  user_id = $1
+  and id > $2
 order by
   id asc
 limit
@@ -91,3 +90,16 @@ from public.users
 where
   email = $1
   and password = $2;
+-- name: ListUsers :many
+select
+  *
+from public.users
+where
+  id = ANY($1 :: int []);
+
+  -- name: ListProducts :many
+select
+  *
+from public.products
+where
+  id = ANY($1 :: int []);

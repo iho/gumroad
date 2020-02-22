@@ -17,6 +17,7 @@ import (
 	"github.com/go-chi/jwtauth"
 	"github.com/gorilla/websocket"
 	"github.com/iho/gumroad/auth"
+	"github.com/iho/gumroad/dataloaders"
 	"github.com/iho/gumroad/graph"
 	"github.com/iho/gumroad/graph/generated"
 	"github.com/iho/gumroad/pg"
@@ -86,6 +87,7 @@ func main() {
 	router.Use(jwtauth.Verifier(auth.TokenAuth))
 	// router.Use(jwtauth.Authenticator)
 	router.Use(auth.Middleware(db, repo))
+	router.Use(dataloaders.Middleware(repo))
 	config := generated.Config{Resolvers: &graph.Resolver{
 		Repository: repo,
 	}}

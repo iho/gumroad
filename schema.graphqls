@@ -74,7 +74,6 @@ type Mutation {
   login(email: String!, password: String!): String!
   forgotPassword(email: String): Boolean
   changePassword(hash: String, password: String!): Boolean @authorized()
-  singleUpload(file: Upload!): Boolean!
 }
 
 scalar Timestamp

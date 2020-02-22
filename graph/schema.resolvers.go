@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/iho/gumroad/auth"
+	"github.com/iho/gumroad/dataloaders"
 	"github.com/iho/gumroad/graph/generated"
 	"github.com/iho/gumroad/graph/model"
 	"github.com/iho/gumroad/pg"
@@ -91,17 +92,8 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, hash *string, pas
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) SingleUpload(ctx context.Context, file graphql.Upload) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *productResolver) User(ctx context.Context, obj *pg.Product) (*pg.User, error) {
-	userRow, err := r.Repository.GetUser(ctx, obj.UserID.Int32)
-	if err != nil {
-		return nil, err
-	}
-	user := pg.User{ID: userRow.ID, Name: userRow.Name, Username: userRow.Username}
-	return &user, nil
+	return dataloaders.For(ctx).UserByID.Load(obj.UserID.Int32)
 }
 
 func (r *productResolver) Price(ctx context.Context, obj *pg.Product) (int32, error) {
@@ -186,3 +178,13 @@ func (r *Resolver) Query() generated.QueryResolver       { return &queryResolver
 type mutationResolver struct{ *Resolver }
 type productResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *mutationResolver) SingleUpload(ctx context.Context, file graphql.Upload) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
