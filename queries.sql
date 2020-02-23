@@ -77,6 +77,12 @@ where
 insert into public.users (username, "name", bio, email, password)
 values
   ($1, $2, $3, $4, $5) returning *;
+-- name: UpdatePassword :exec
+update public.users
+set
+  password = $1
+where
+  id = $2;
 -- name: PublishProduct :one
 update public.products
 set
@@ -95,11 +101,10 @@ select
   *
 from public.users
 where
-  id = ANY($1 :: int []);
-
-  -- name: ListProducts :many
+  id = any($1 :: int[]);
+-- name: ListProducts :many
 select
   *
 from public.products
 where
-  id = ANY($1 :: int []);
+  id  =any($1 :: int []);

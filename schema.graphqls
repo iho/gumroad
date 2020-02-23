@@ -66,14 +66,25 @@ input PublishProduct {
   slug: String!
 }
 
+type BoolResponse {
+  isSuccess: Boolean!
+}
+type TokenResponse {
+  token: String!
+}
 type Mutation {
   buyProduct(input: BuyProduct): PayResponse! @authorized()
   createProduct(input: NewProduct!): Product! @authorized()
   publishProduct(input: PublishProduct!): Product! @authorized()
-  signup(email: String!, password: String!, username: String!, name: String): String!
-  login(email: String!, password: String!): String!
-  forgotPassword(email: String): Boolean
-  changePassword(hash: String, password: String!): Boolean @authorized()
+  signup(email: String!, password: String!, username: String!, name: String): TokenResponse!
+  login(email: String!, password: String!): TokenResponse!
+  forgotPassword(email: String): BoolResponse
+  changePassword(password: String!): BoolResponse @authorized()
+}
+
+schema {
+  query: Query
+  mutation: Mutation
 }
 
 scalar Timestamp

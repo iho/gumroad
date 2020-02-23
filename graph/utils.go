@@ -8,7 +8,7 @@ import (
 func converUserToExtendedUser(user *pg.User) *model.ExtendedUser {
 	return &model.ExtendedUser{
 		Balance:  user.Balance.Int32,
-		ID:       user.ID,
+		ID:       int(user.ID),
 		Name:     user.Name,
 		Username: user.Username,
 		Bio:      user.Bio,

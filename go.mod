@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/websocket v1.2.0
 	github.com/iho/gqlgen-todos v0.0.0-20200217151530-b7e9665aa5fc
 	github.com/jmoiron/sqlx v1.2.0
+	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.3.0
 	github.com/mattn/go-oci8 v0.0.4 // indirect
 	github.com/rs/cors v1.7.0

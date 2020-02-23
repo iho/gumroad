@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -21,6 +22,7 @@ import (
 	"github.com/iho/gumroad/graph"
 	"github.com/iho/gumroad/graph/generated"
 	"github.com/iho/gumroad/pg"
+	"github.com/joho/godotenv"
 	"github.com/vektah/gqlparser/gqlerror"
 
 	_ "github.com/lib/pq"
@@ -65,6 +67,10 @@ func uploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -77,9 +83,9 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8080"},
+		AllowedOrigins:   []string{"http://localhost:8080", "http://localhost:3000"},
 		AllowCredentials: true,
-		// Debug:            true,
+		Debug:            true,
 	}).Handler)
 
 	// initialize the repository

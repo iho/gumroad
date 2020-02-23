@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/99designs/gqlgen/graphql"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/iho/gumroad/auth"
 	"github.com/iho/gumroad/dataloaders"
@@ -47,11 +46,12 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, input model.NewPro
 }
 
 func (r *mutationResolver) PublishProduct(ctx context.Context, input model.PublishProduct) (*pg.Product, error) {
-	product, err := r.Repository.PublishProduct(ctx, input.ProductID)
+	// i, _ := strconv.Atoi(input.ProductID)
+	product, err := r.Repository.PublishProduct(ctx, int32(input.ProductID))
 	return &product, err
 }
 
-func (r *mutationResolver) Signup(ctx context.Context, email string, password string, username string, name *string) (string, error) {
+func (r *mutationResolver) Signup(ctx context.Context, email string, password string, username string, name *string) (*model.TokenResponse, error) {
 	safeName := ""
 	if name != nil {
 		safeName = *name
@@ -65,12 +65,12 @@ func (r *mutationResolver) Signup(ctx context.Context, email string, password st
 	})
 	if err == nil {
 		_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": string(user.ID)})
-		return tokenString, nil
+		return &model.TokenResponse{Token: tokenString}, nil
 	}
-	return "", gqlerror.Errorf("Some error occurred")
+	return &model.TokenResponse{}, gqlerror.Errorf("Some error occurred")
 }
 
-func (r *mutationResolver) Login(ctx context.Context, email string, password string) (string, error) {
+func (r *mutationResolver) Login(ctx context.Context, email string, password string) (*model.TokenResponse, error) {
 	hash, _ := auth.GenerateFromPassword(password)
 	userID, err := r.Repository.GetUserByLoginAndHash(ctx, pg.GetUserByLoginAndHashParams{
 		Email:    sql.NullString{String: email, Valid: true},
@@ -79,17 +79,30 @@ func (r *mutationResolver) Login(ctx context.Context, email string, password str
 	if err == nil {
 
 		_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": string(userID)})
-		return tokenString, nil
+		return &model.TokenResponse{Token: tokenString}, nil
 	}
-	return "", gqlerror.Errorf("No user with current credentials.")
+	return &model.TokenResponse{}, gqlerror.Errorf("No user with current credentials.")
 }
 
-func (r *mutationResolver) ForgotPassword(ctx context.Context, email *string) (*bool, error) {
+func (r *mutationResolver) ForgotPassword(ctx context.Context, email *string) (*model.BoolResponse, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) ChangePassword(ctx context.Context, hash *string, password string) (*bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) ChangePassword(ctx context.Context, password string) (*model.BoolResponse, error) {
+	hash, _ := auth.GenerateFromPassword(password)
+	user, ok := auth.ForContext(ctx)
+	err := r.Repository.UpdatePassword(ctx, pg.UpdatePasswordParams{
+		Password: sql.NullString{String: hash, Valid: true},
+		ID:       user.ID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &model.BoolResponse{IsSuccess: ok}, nil
+}
+
+func (r *productResolver) ID(ctx context.Context, obj *pg.Product) (int, error) {
+	return int(obj.ID), nil
 }
 
 func (r *productResolver) User(ctx context.Context, obj *pg.Product) (*pg.User, error) {
@@ -153,6 +166,7 @@ func (r *queryResolver) MyProducts(ctx context.Context, count *int32, after *int
 
 	user, ok := auth.ForContext(ctx)
 	if ok {
+		fmt.Println(ok)
 		return r.Repository.MyProducts(ctx, pg.MyProductsParams{
 			ID:     afterID,
 			Limit:  limit,
@@ -171,20 +185,16 @@ func (r *queryResolver) Me(ctx context.Context) (*model.ExtendedUser, error) {
 	return nil, gqlerror.Errorf("user is not logined :(")
 }
 
+func (r *userResolver) ID(ctx context.Context, obj *pg.User) (int, error) {
+	return int(obj.ID), nil
+}
+
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 func (r *Resolver) Product() generated.ProductResolver   { return &productResolver{r} }
 func (r *Resolver) Query() generated.QueryResolver       { return &queryResolver{r} }
+func (r *Resolver) User() generated.UserResolver         { return &userResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type productResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *mutationResolver) SingleUpload(ctx context.Context, file graphql.Upload) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
-}
+type userResolver struct{ *Resolver }
