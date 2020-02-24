@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/iho/gumroad/auth"
@@ -71,15 +72,13 @@ func (r *mutationResolver) Signup(ctx context.Context, email string, password st
 }
 
 func (r *mutationResolver) Login(ctx context.Context, email string, password string) (*model.TokenResponse, error) {
-	hash, _ := auth.GenerateFromPassword(password)
-	userID, err := r.Repository.GetUserByLoginAndHash(ctx, pg.GetUserByLoginAndHashParams{
-		Email:    sql.NullString{String: email, Valid: true},
-		Password: sql.NullString{String: hash, Valid: true},
-	})
+	userRow, err := r.Repository.GetUserByEmail(ctx, sql.NullString{String: email, Valid: true})
 	if err == nil {
-
-		_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": string(userID)})
-		return &model.TokenResponse{Token: tokenString}, nil
+		match, err := auth.ComparePasswordAndHash(password, userRow.Password.String)
+		if match && err == nil {
+			_, tokenString, _ := auth.TokenAuth.Encode(jwt.MapClaims{"user_id": strconv.FormatInt(int64(userRow.ID), 10)})
+			return &model.TokenResponse{Token: tokenString}, nil
+		}
 	}
 	return &model.TokenResponse{}, gqlerror.Errorf("No user with current credentials.")
 }

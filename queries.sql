@@ -89,13 +89,12 @@ set
   isPablished = true
 where
   id = $1 returning *;
--- name: GetUserByLoginAndHash :one
+-- name: GetUserByEmail :one
 select
-  id
+  id, email, password
 from public.users
 where
-  email = $1
-  and password = $2;
+  email = $1;
 -- name: ListUsers :many
 select
   *

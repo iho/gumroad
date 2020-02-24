@@ -5,20 +5,46 @@ import './App.css';
 
 import { useQuery } from "./models/reactUtils"
 
-// import gql from 'graphql-tag';
-import {Box, Button, Spinner} from "@chakra-ui/core";
+import { Box, Button, Spinner } from "@chakra-ui/core";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import LoginPage from './pages/login';
+import SignupPage from './pages/signup';
+
+const About: React.FunctionComponent<{}> = observer(() => {
+  return <div>about </div>
+});
+const Users: React.FunctionComponent<{}> = observer(() => {
+  return <div>users</div>
+});
+const Home: React.FunctionComponent<{}> = observer(() => {
+  return <div>Home </div>
+});
 const App: React.FunctionComponent<{}> = observer(() => {
-  const {  error, loading, data } = useQuery(store => store.queryProducts({after: 25}))
-  if (error) return <Box>{error.message}</Box>
-  if (loading) return <Spinner />
-
-
   return (
-    <ul>
-      {data?.products.map(product => (
-        <Box key={product.id}>{product.name}</Box>
-      ))}
-    </ul>
+    <div style={{ "flex": "1" }}>
+      <Switch>
+        <Route path="/about">
+          <About />
+        </Route>
+        <Route path="/users">
+          <Users />
+        </Route>
+        <Route path="/login">
+          <LoginPage />
+        </Route>
+        <Route path="/signup">
+          <SignupPage />
+        </Route>
+        <Route path="/">
+          <Home />
+        </Route>
+      </Switch>
+    </div>
   )
 });
 
