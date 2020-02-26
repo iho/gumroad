@@ -6,8 +6,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -88,7 +88,7 @@ func (a requestStruct) buildString() string {
 	values = append(values, a.ProductCount...)
 	values = append(values, a.ProductPrice...)
 	result := strings.Join(values, ";")
-	fmt.Println(result)
+	log.Println(result)
 	return result
 }
 
@@ -154,14 +154,14 @@ func main() {
 		ServiceURL:         "http://dream.market/",
 	}
 	sign := as.generateSignature(key)
-	fmt.Println(sign)
-	fmt.Println(as.OrderDate)
+	log.Println(sign)
+	log.Println(as.OrderDate)
 	as.MerchantSignature = sign
 	APIURL := "https://api.wayforpay.com/api"
 	jsonStr, err := json.Marshal(as)
 
 	if err != nil {
-		fmt.Println("error:", err)
+		log.Println("error:", err)
 	}
 	req, err := http.NewRequest("POST", APIURL, bytes.NewBuffer(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
@@ -173,12 +173,12 @@ func main() {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
+	log.Println("response Status:", resp.Status)
+	log.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	var response apiSResponseStruct
 	err = json.Unmarshal(body, &response)
-	fmt.Println(response)
-	fmt.Println("response Body:", string(body))
+	log.Println(response)
+	log.Println("response Body:", string(body))
 }

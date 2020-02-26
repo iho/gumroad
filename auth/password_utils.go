@@ -45,13 +45,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(encodedHash)
+	log.Println(encodedHash)
 	match, err := ComparePasswordAndHash("password123", encodedHash)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Match: %v\n", match)
+	log.Printf("Match: %v\n", match)
 }
 
 // ComparePasswordAndHash checks if password and hash are equal

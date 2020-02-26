@@ -2,7 +2,7 @@ package dataloaders
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/iho/gumroad/pg"
@@ -30,7 +30,7 @@ func newLoaders(ctx context.Context, repo pg.Querier) *Loaders {
 func newUserByID(ctx context.Context, repo pg.Querier) *UserLoader {
 	return &UserLoader{
 		maxBatch: 100,
-		wait:     5 * time.Millisecond,
+		wait:     1 * time.Millisecond,
 		fetch: func(userIDs []int32) ([]*pg.User, []error) {
 			// db query
 			res, err := repo.ListUsers(ctx, userIDs)
@@ -47,7 +47,7 @@ func newUserByID(ctx context.Context, repo pg.Querier) *UserLoader {
 			for i, ID := range userIDs {
 				result[i] = groupByUserIDs[ID]
 			}
-			fmt.Println("result", result)
+			log.Println("result", result)
 			return result, nil
 		},
 	}
@@ -56,7 +56,7 @@ func newUserByID(ctx context.Context, repo pg.Querier) *UserLoader {
 func newProductByID(ctx context.Context, repo pg.Querier) *ProductLoader {
 	return &ProductLoader{
 		maxBatch: 100,
-		wait:     5 * time.Millisecond,
+		wait:     1 * time.Millisecond,
 		fetch: func(productIDs []int32) ([]*pg.Product, []error) {
 			// db query
 			res, err := repo.ListProducts(ctx, productIDs)

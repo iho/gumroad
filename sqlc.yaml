@@ -5,6 +5,6 @@ packages:
     emit_prepared_queries: false
     emit_interface: true
     path: "pg"
-    queries: "./queries.sql"
+    queries: "./queries/"
     schema: "./migrations/"
     engine: "postgresql"

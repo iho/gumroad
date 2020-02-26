@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -33,8 +33,8 @@ func Middleware(db *sql.DB, repo pg.Querier) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			_, claims, err := jwtauth.FromContext(r.Context())
-			fmt.Println(err)
-			fmt.Println(claims)
+			log.Println(err)
+			log.Println(claims)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
@@ -46,10 +46,10 @@ func Middleware(db *sql.DB, repo pg.Querier) func(http.Handler) http.Handler {
 			if err != nil {
 				id = -1
 			}
-			fmt.Println(id)
+			log.Println(id)
 			user, err := repo.GetUser(r.Context(), int32(id))
-			fmt.Println(user)
-			fmt.Println(err)
+			log.Println(user)
+			log.Println(err)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return

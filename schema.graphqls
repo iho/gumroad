@@ -13,6 +13,14 @@ type ExtendedUser {
   balance: Int!
   email: String!
 }
+type File{
+  path: String!
+  isBought: Boolean!
+}
+type Image{
+  path: String!
+  preview_path: String!
+}
 
 type Product {
   id: ID!
@@ -27,7 +35,8 @@ type Product {
   slug: String
   isPablished: Boolean
   receipt: String
-  content: String
+  content: File
+  images: [Image!]
 }
 
 type Query {
@@ -35,6 +44,8 @@ type Query {
   products(username: String, count: Int=100, after: Int): [Product!]!
   myProducts(count: Int=100, after: Int): [Product!]!  @authorized()
   me: ExtendedUser! @authorized()
+  myImages: [Image!]! @authorized()
+  myFiles: [File!]!   @authorized()
 }
 
 directive @authorized on FIELD_DEFINITION | ENUM_VALUE

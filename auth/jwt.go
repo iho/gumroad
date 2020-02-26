@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"fmt"
+	"log"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/jwtauth"
@@ -16,5 +16,5 @@ func init() {
 	// For debugging/example purposes, we generate and print
 	// a sample jwt token with claims `user_id:123` here:
 	_, tokenString, _ := TokenAuth.Encode(jwt.MapClaims{"user_id": "1"})
-	fmt.Printf("DEBUG: a sample jwt is %s\n\n", tokenString)
+	log.Printf("DEBUG: a sample jwt is %s\n\n", tokenString)
 }
